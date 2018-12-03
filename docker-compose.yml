@@ -1,0 +1,50 @@
+version: "3.1"
+
+services:
+  php:
+    image: php:7.2-apache_ext-mysqli
+    build: .
+    volumes:
+      - ./src:/var/www/html
+    networks:
+      - backend
+    secrets:
+      - secret-phrase
+      - secret-in-a-file
+      - mysql_password
+    environment:
+      - "MY_ENV_VAR=Lorem ipsum dolor sit amet"
+      - SECRET_FILE_PATH=/run/secrets/secret-in-a-file
+      # database configs
+      - MY_DB_PASSWORD_FILE=/run/secrets/mysql_password
+      - MY_DB_USER=user
+      - MY_DB_HOST=mysql
+      - MY_DB_DATABASE=mydb
+
+  mysql:
+    image: mysql:8
+    networks:
+      - backend
+    environment:
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD_FILE=/run/secrets/mysql_password
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mysql_root_password
+      - MYSQL_DATABASE=mydb
+    secrets: 
+      - mysql_password
+      - mysql_root_password
+    # this command is required in order to login with user/password
+    command: --default-authentication-plugin=mysql_native_password
+
+networks:
+  backend:
+
+secrets:
+  secret-phrase:
+    external: true
+  secret-in-a-file:
+    external: true
+  mysql_password:
+    file: ./mysql_password.txt
+  mysql_root_password:
+    file: ./mysql_root_password.txt
